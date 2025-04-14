@@ -3,7 +3,10 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"time"
 )
 
@@ -45,6 +48,38 @@ func createURL(URL string) string  {
 	return shortURL;
 }
 
+func getShortedUrl(id string) (Url , error) {
+	url,ok := urlBD[id]
+	if !ok {
+		return Url{} , errors.New("Url Not Found")
+	}
+	return url,nil
+}
+
+func rootHandler(w http.ResponseWriter , r *http.Request){
+	fmt.Println("GET request only")
+	fmt.Fprintf(w,"hello world")
+}
+
+func ShortURLHander (w http.ResponseWriter , r *http.Request){
+	var data struct{
+		URL string `json:"url"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err!= nil {
+		http.Error(w,"Invalid req body",http.StatusBadRequest)
+	}
+}
+
 func main() {
-	fmt.Println("Url Shortner Server running....");
+	fmt.Println("Url Shortner Server running at the port 4000....");
+
+	// function for listening for the request to the /
+	http.HandleFunc("/",rootHandler)
+
+	// starting the http server
+	err := http.ListenAndServe(":4000",nil)
+	if( err !=nil) {
+		fmt.Println("An Error Occured While Starting the Server",err)
+	}
 }
